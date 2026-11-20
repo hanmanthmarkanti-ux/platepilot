@@ -29,15 +29,24 @@ const SLOT_LABEL = {
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await loadRecipes();
-  loadCommunity();
-  bindForm();
-  bindChips();
-  bindTopbar();
-  bindMess();
-  bindCommunity();
-  bindPriceSlider();
-  restoreLastPlan();
+  bindModals();
+  try {
+    await loadRecipes();
+  } catch (e) {
+    console.error(e);
+  }
+  try {
+    loadCommunity();
+    bindForm();
+    bindChips();
+    bindTopbar();
+    bindMess();
+    bindCommunity();
+    bindPriceSlider();
+    restoreLastPlan();
+  } catch (e) {
+    console.error('init error', e);
+  }
 });
 
 async function loadRecipes() {
@@ -88,11 +97,61 @@ function bindForm() {
   });
 }
 
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.hidden = false;
+  el.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.hidden = true;
+  el.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function bindModals() {
+  ['historyModal', 'swapModal'].forEach((id) => {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    // click backdrop closes
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal(id);
+    });
+  });
+
+  const closeBtn = document.getElementById('historyClose');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeModal('historyModal');
+    });
+  }
+
+  const cancelBtn = document.getElementById('swapCancel');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeModal('swapModal');
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeModal('historyModal');
+      closeModal('swapModal');
+    }
+  });
+}
+
 function bindTopbar() {
   $('#btnHistory').addEventListener('click', showHistory);
   $('#btnExport').addEventListener('click', () => window.print());
-  $('#historyClose').addEventListener('click', () => ($('#historyModal').hidden = true));
-  $('#swapCancel').addEventListener('click', () => ($('#swapModal').hidden = true));
   $('#btnPantryMode').addEventListener('click', () => {
     document.body.classList.toggle('show-pantry');
     renderGrocery();
@@ -328,7 +387,7 @@ function openSwap(meal) {
   $('#swapHint').textContent = `Replacing "${meal.name}" (₹${meal.cost}) with a nutritionally similar, budget-compatible option.`;
   const opts = $('#swapOptions');
   opts.innerHTML = '<p class="hint">Finding alternatives…</p>';
-  $('#swapModal').hidden = false;
+  $('#swapModal') && openModal('swapModal');
 
   const plan = state.plan;
   const day = plan.week[state.activeDay];
@@ -384,7 +443,7 @@ function applySwap(alt) {
     .map((s) => s.trim())
     .filter(Boolean);
   state.plan.grocery = buildGrocery(state.plan.week, pantry);
-  $('#swapModal').hidden = true;
+  closeModal('swapModal');
   renderPlan();
   renderGrocery();
   savePlan(state.plan);
@@ -571,11 +630,11 @@ function showHistory() {
         state.activeDay = 0;
         renderPlan();
         renderGrocery();
-        $('#historyModal').hidden = true;
+        $('#historyModal') && closeModal('historyModal');
       });
     });
   }
-  $('#historyModal').hidden = false;
+  openModal('historyModal');
 }
 
 function escapeHtml(s) {

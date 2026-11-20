@@ -374,13 +374,20 @@ input:focus, select:focus { outline: 2px solid var(--accent); border-color: tran
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,.65);
-  display: grid;
+  display: none;
   place-items: center;
   z-index: 50;
   padding: 20px;
+  cursor: pointer;
+}
+.modal.open {
+  display: grid;
 }
 .modal[hidden] {
   display: none !important;
+}
+.modal.open:not([hidden]) {
+  display: grid !important;
 }
 .modal-card {
   background: var(--panel);
@@ -392,6 +399,8 @@ input:focus, select:focus { outline: 2px solid var(--accent); border-color: tran
   overflow: auto;
   display: grid;
   gap: 12px;
+  cursor: default;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
 }
 .swap-opt {
   background: var(--panel2);
